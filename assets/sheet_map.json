@@ -1,0 +1,212 @@
+{
+  "cell": 256,
+  "columns": 9,
+  "actions": [
+    {
+      "name": "idle",
+      "label": "기본 대기 (숨쉬기 + 눈 깜빡임)",
+      "row": 0,
+      "frames": 8,
+      "loop": true
+    },
+    {
+      "name": "walk_right",
+      "label": "걷기 → 오른쪽",
+      "row": 1,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "walk_left",
+      "label": "걷기 ← 왼쪽",
+      "row": 2,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "run_right",
+      "label": "달리기 → 오른쪽",
+      "row": 3,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "run_left",
+      "label": "달리기 ← 왼쪽",
+      "row": 4,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "jump",
+      "label": "점프 (웅크리기 → 도약 → 착지)",
+      "row": 5,
+      "frames": 9,
+      "loop": false
+    },
+    {
+      "name": "wave",
+      "label": "인사 (손 흔들기)",
+      "row": 6,
+      "frames": 7,
+      "loop": true
+    },
+    {
+      "name": "joy",
+      "label": "기쁨 (웃으며 팔 흔들기)",
+      "row": 7,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "doze",
+      "label": "졸기 (꾸벅꾸벅 → 깜짝 깸)",
+      "row": 8,
+      "frames": 8,
+      "loop": true
+    },
+    {
+      "name": "sleep",
+      "label": "잠자기 (옆으로 누워 숨쉬기)",
+      "row": 9,
+      "frames": 6,
+      "loop": true
+    },
+    {
+      "name": "angry",
+      "label": "화내기 (삐침 → 발 구르기)",
+      "row": 10,
+      "frames": 6,
+      "loop": false
+    },
+    {
+      "name": "roll",
+      "label": "뒹굴기 (눕기 → 굴러가기)",
+      "row": 11,
+      "frames": 9,
+      "loop": true
+    },
+    {
+      "name": "surprise",
+      "label": "놀라기",
+      "row": 12,
+      "frames": 6,
+      "loop": false
+    },
+    {
+      "name": "love",
+      "label": "사랑 (수줍음 → 하트)",
+      "row": 13,
+      "frames": 8,
+      "loop": false
+    }
+  ],
+  "gaze": {
+    "cell": 256,
+    "grid": "5x5",
+    "dirs": [
+      {
+        "name": "front",
+        "angle_deg": null,
+        "row": 2,
+        "col": 2
+      },
+      {
+        "name": "E",
+        "angle_deg": 0.0,
+        "row": 2,
+        "col": 4
+      },
+      {
+        "name": "ENE",
+        "angle_deg": 22.5,
+        "row": 1,
+        "col": 4
+      },
+      {
+        "name": "NE",
+        "angle_deg": 45.0,
+        "row": 0,
+        "col": 4
+      },
+      {
+        "name": "NNE",
+        "angle_deg": 67.5,
+        "row": 0,
+        "col": 3
+      },
+      {
+        "name": "N",
+        "angle_deg": 90.0,
+        "row": 0,
+        "col": 2
+      },
+      {
+        "name": "NNW",
+        "angle_deg": 112.5,
+        "row": 0,
+        "col": 1
+      },
+      {
+        "name": "NW",
+        "angle_deg": 135.0,
+        "row": 0,
+        "col": 0
+      },
+      {
+        "name": "WNW",
+        "angle_deg": 157.5,
+        "row": 1,
+        "col": 0
+      },
+      {
+        "name": "W",
+        "angle_deg": 180.0,
+        "row": 2,
+        "col": 0
+      },
+      {
+        "name": "WSW",
+        "angle_deg": 202.5,
+        "row": 3,
+        "col": 0
+      },
+      {
+        "name": "SW",
+        "angle_deg": 225.0,
+        "row": 4,
+        "col": 0
+      },
+      {
+        "name": "SSW",
+        "angle_deg": 247.5,
+        "row": 4,
+        "col": 1
+      },
+      {
+        "name": "S",
+        "angle_deg": 270.0,
+        "row": 4,
+        "col": 2
+      },
+      {
+        "name": "SSE",
+        "angle_deg": 292.5,
+        "row": 4,
+        "col": 3
+      },
+      {
+        "name": "SE",
+        "angle_deg": 315.0,
+        "row": 4,
+        "col": 4
+      },
+      {
+        "name": "ESE",
+        "angle_deg": 337.5,
+        "row": 3,
+        "col": 4
+      }
+    ]
+  }
+}
