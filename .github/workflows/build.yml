@@ -15,6 +15,7 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,19 @@ jobs:
         run: |
           pyinstaller --noconfirm --windowed --name jeongttangkong --icon icon.png --add-data "assets:assets" pet.py
           cd dist && ditto -c -k --keepParent jeongttangkong.app jeongttangkong-mac.zip
+
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: timeout 120 ./dist/jeongttangkong.exe --selftest
+
+      - name: Smoke test (macOS)
+        if: runner.os == 'macOS'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ./dist/jeongttangkong.app/Contents/MacOS/jeongttangkong --selftest
 
       - name: Keep build files
         uses: actions/upload-artifact@v4
