@@ -13,8 +13,9 @@ import os
 import random
 import sys
 import time
+import traceback
 
-from PySide6.QtCore import Qt, QTimer, QPoint, QRect
+from PySide6.QtCore import Qt, QTimer, QPoint, QRect, QDir, QLockFile, QSettings
 from PySide6.QtGui import QAction, QActionGroup, QCursor, QGuiApplication, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon, QWidget
 
@@ -113,6 +114,7 @@ class Pet(QWidget):
         self.timer.timeout.connect(self.tick)
         self.timer.start(TICK_MS)
 
+        self.auto_actions = []
         self.menu = self.build_menu()
         self.tray = None
         if QSystemTrayIcon.isSystemTrayAvailable():
@@ -361,6 +363,14 @@ class Pet(QWidget):
         self.menu.exec(e.globalPos())
 
     # ---------- 메뉴 ----------
+    def set_autostart_option(self, on):
+        save_autostart(on)
+        for a in self.auto_actions:      # 펫 메뉴와 트레이 메뉴 체크 표시 맞추기
+            if a.isChecked() != on:
+                a.blockSignals(True)
+                a.setChecked(on)
+                a.blockSignals(False)
+
     def build_menu(self):
         m = QMenu()
         def add(text, fn):
@@ -387,7 +397,14 @@ class Pet(QWidget):
             grp.addAction(act)
             sm.addAction(act)
         m.addSeparator()
-        add("종료", QApplication.instance().quit)
+        auto = QAction("컴퓨터 켤 때 자동 실행", m)
+        auto.setCheckable(True)
+        auto.setChecked(autostart_enabled())
+        auto.toggled.connect(self.set_autostart_option)
+        self.auto_actions.append(auto)
+        m.addAction(auto)
+        m.addSeparator()
+        add("종료", quit_by_user)
         return m
 
     def set_size(self, px):
@@ -396,14 +413,110 @@ class Pet(QWidget):
         self.move(self.x(), self.floor_y())
 
 
+APP_ID = "jeongttangkong"
+MAC_PLIST = os.path.expanduser(f"~/Library/LaunchAgents/com.kithub0224.{APP_ID}.plist")
+
+
+def autostart_target():
+    """자동 실행에 등록할 실행 파일 경로. 빌드된 앱(exe/.app)일 때만 등록."""
+    if not getattr(sys, "frozen", False):
+        return None
+    exe = os.path.abspath(sys.executable)
+    if sys.platform == "darwin" and "/AppTranslocation/" in exe:
+        return None   # 다운로드 폴더에서 바로 실행한 경우: 경로가 매번 바뀌어 등록하지 않음
+    return exe
+
+
+def set_autostart(on):
+    """켜져 있는 동안은 컴퓨터를 켤 때 자동 실행, 메뉴로 직접 종료하면 해제."""
+    try:
+        if sys.platform.startswith("win"):
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE)
+            if on:
+                exe = autostart_target()
+                if exe:
+                    winreg.SetValueEx(key, APP_ID, 0, winreg.REG_SZ, f'"{exe}"')
+            else:
+                try:
+                    winreg.DeleteValue(key, APP_ID)
+                except FileNotFoundError:
+                    pass
+            winreg.CloseKey(key)
+        elif sys.platform == "darwin":
+            if on:
+                exe = autostart_target()
+                if exe:
+                    os.makedirs(os.path.dirname(MAC_PLIST), exist_ok=True)
+                    with open(MAC_PLIST, "w", encoding="utf-8") as f:
+                        f.write(f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>com.kithub0224.{APP_ID}</string>
+<key>ProgramArguments</key><array><string>{exe}</string></array>
+<key>RunAtLoad</key><true/>
+</dict></plist>
+""")
+            elif os.path.exists(MAC_PLIST):
+                os.remove(MAC_PLIST)
+    except Exception:
+        traceback.print_exc()   # 자동 실행 등록에 실패해도 펫은 그대로 실행
+
+
+def autostart_enabled():
+    # 처음 실행할 때는 켜짐이 기본값
+    return QSettings("kithub0224", APP_ID).value("autostart", True, type=bool)
+
+
+def save_autostart(on):
+    QSettings("kithub0224", APP_ID).setValue("autostart", bool(on))
+    set_autostart(on)
+
+
+def quit_by_user():
+    QApplication.instance().quit()
+
+
 def main():
+    selftest = "--selftest" in sys.argv
+    if selftest:
+        # 빌드 확인용: 오류가 나면 바로 실패 코드로 끝냄
+        def hook(*exc):
+            traceback.print_exception(*exc)
+            os._exit(1)
+        sys.excepthook = hook
+
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+
+    lock = None
+    if not selftest:
+        # 이미 실행 중이면 하나 더 띄우지 않음
+        lock = QLockFile(os.path.join(QDir.tempPath(), APP_ID + ".lock"))
+        if not lock.tryLock(100):
+            return
+        set_autostart(autostart_enabled())   # 설정대로 등록/해제 (exe 위치가 바뀌어도 갱신)
+
     pet = Pet()
     app.setWindowIcon(QIcon(pet.raw["gaze_front"]))
     pet.show()
     pet.rescale()   # 실제 화면 배율로 다시 맞춤
-    sys.exit(app.exec())
+
+    if selftest:
+        missing = [n for names in pet.seq.values() for n in names if pet.cache.get(n) is None or pet.cache[n].isNull()]
+        if missing:
+            print("missing frames:", missing)
+            sys.exit(1)
+        acts = ["wave", "joy", "jump", "roll", "love", "angry", "surprise"]
+        for k, a in enumerate(acts):
+            QTimer.singleShot(300 + k * 400, lambda a=a: pet.play(a))
+        QTimer.singleShot(3200, lambda: pet.start_walk(run=True))
+        QTimer.singleShot(4000, pet.go_sleep)
+        QTimer.singleShot(6000, app.quit)
+
+    code = app.exec()
+    sys.exit(code)
 
 
 if __name__ == "__main__":
